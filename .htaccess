@@ -1,0 +1,55 @@
+RewriteEngine On
+
+# --------------------------------------------------
+# 1. Allow IRIA Review Portal to work independently
+# --------------------------------------------------
+RewriteRule ^review/ - [L]
+
+# --------------------------------------------------
+# 2. Force HTTPS
+# --------------------------------------------------
+RewriteCond %{HTTPS} !=on
+RewriteRule ^ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
+
+# --------------------------------------------------
+# 3. Optional: Force non-www to www OR keep non-www
+# --------------------------------------------------
+# If your website normally uses https://iria2027.com
+# keep this section commented.
+
+# RewriteCond %{HTTP_HOST} ^www\.iria2027\.com$ [NC]
+# RewriteRule ^(.*)$ https://iria2027.com/$1 [L,R=301]
+
+# --------------------------------------------------
+# 4. Disable directory listing
+# --------------------------------------------------
+Options -Indexes
+
+# --------------------------------------------------
+# 5. Protect sensitive files
+# --------------------------------------------------
+<FilesMatch "^(\.env|composer\.(json|lock)|package(-lock)?\.json|README.*|.*\.sql|.*\.log)$">
+    Require all denied
+</FilesMatch>
+
+# --------------------------------------------------
+# 6. Block direct access to hidden files/folders
+# --------------------------------------------------
+RewriteRule (^|/)\. - [F]
+
+# --------------------------------------------------
+# 7. Existing website routing / front controller
+# --------------------------------------------------
+# If your main IRIA website uses normal PHP pages,
+# this section safely lets real files and folders load.
+
+RewriteCond %{REQUEST_FILENAME} -f [OR]
+RewriteCond %{REQUEST_FILENAME} -d
+RewriteRule ^ - [L]
+
+# --------------------------------------------------
+# 8. Optional custom 404 handling
+# --------------------------------------------------
+# Uncomment only if your website has 404.php
+
+# ErrorDocument 404 /404.php

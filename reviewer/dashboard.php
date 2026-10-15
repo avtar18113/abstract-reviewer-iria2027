@@ -1,0 +1,7 @@
+<?php
+require_once __DIR__ . '/../includes/auth.php';require_reviewer();$rid=(int)$_SESSION['reviewer_id'];$counts=[];
+$st=db()->prepare('SELECT COUNT(*) total,SUM(status="pending") pending,SUM(status="under_review") under_review,SUM(status="accepted") accepted,SUM(status="rejected") rejected,SUM(status="resubmit") resubmit,SUM(status="cannot_review") cannot_review,SUM(review_deadline<NOW() AND status NOT IN("accepted","rejected")) overdue FROM review_assignments WHERE reviewer_id=? AND is_active=1');$st->bind_param('i',$rid);$st->execute();$counts=$st->get_result()->fetch_assoc();
+$pageTitle='Reviewer Dashboard';require __DIR__ . '/../includes/header.php';$cards=['total'=>'Total Assigned','pending'=>'Pending','under_review'=>'Under Review','accepted'=>'Accepted','rejected'=>'Rejected','resubmit'=>'Re-submit','cannot_review'=>'Cannot Review','overdue'=>'Overdue'];
+?>
+<div class="d-flex justify-content-between align-items-center mb-4"><div><h2 class="mb-1">Welcome, <?= e($_SESSION['reviewer_name']) ?></h2><div class="text-muted">Your abstract review workload</div></div><a href="abstracts.php" class="btn btn-brand">View Assigned Abstracts</a></div><div class="row g-3"><?php foreach($cards as $k=>$label):?><div class="col-6 col-md-4 col-xl-3"><div class="card stat-card"><div class="card-body"><div class="small-muted"><?= e($label) ?></div><div class="stat-number"><?= (int)($counts[$k]??0) ?></div></div></div></div><?php endforeach;?></div>
+<?php require __DIR__ . '/../includes/footer.php'; ?>

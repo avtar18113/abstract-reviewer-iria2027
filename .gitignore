@@ -1,0 +1,7 @@
+# Ignore the config directory
+config/
+# Ignore the README_DEPLOY.md file
+README_DEPLOY.md
+
+# Ignore the setup directory
+setup/
