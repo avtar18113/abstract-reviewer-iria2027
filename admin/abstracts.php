@@ -109,14 +109,19 @@ function distinct_opts($col)
     return array_column($res->fetch_all(MYSQLI_ASSOC), 'v');
 }
 $reviewers = db()->query('SELECT id,full_name FROM reviewers WHERE is_active=1 ORDER BY full_name')->fetch_all(MYSQLI_ASSOC);
+$exportParams = $_GET;
+unset($exportParams['page']);
+$csvExportUrl = 'export-abstracts.php?' . http_build_query(array_merge($exportParams, ['format' => 'csv']));
+$excelExportUrl = 'export-abstracts.php?' . http_build_query(array_merge($exportParams, ['format' => 'excel']));
 $pageTitle = 'Abstracts';
 require __DIR__ . '/../includes/header.php';
 ?>
-<div class="d-flex justify-content-between align-items-center mb-3">
+<div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
     <div>
         <h2 class="mb-1">All Abstracts</h2>
         <div class="text-muted"><?= $total ?> record(s)</div>
     </div>
+    <div class="d-flex gap-2"><a class="btn btn-outline-success" href="<?= e($csvExportUrl) ?>">Export CSV</a><a class="btn btn-outline-primary" href="<?= e($excelExportUrl) ?>">Export Excel (.xls)</a></div>
 </div>
 <div class="card mb-3">
     <div class="card-body">

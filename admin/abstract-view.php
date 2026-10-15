@@ -1,11 +1,76 @@
 <?php
-require_once __DIR__ . '/../includes/auth.php'; require_admin();
-$id=(int)($_GET['id']??0);
-$stmt=db()->prepare('SELECT a.*,ra.id assignment_id,ra.reviewer_id,ra.status review_status,ra.review_deadline,ra.assigned_at,r.full_name reviewer_name,ar.decision,ar.reviewer_comment,ar.is_final,ar.is_locked,ar.submitted_at FROM abstract a LEFT JOIN review_assignments ra ON ra.abstract_id=a.id AND ra.is_active=1 LEFT JOIN reviewers r ON r.id=ra.reviewer_id LEFT JOIN abstract_reviews ar ON ar.assignment_id=ra.id WHERE a.id=? LIMIT 1');
-$stmt->bind_param('i',$id);$stmt->execute();$a=$stmt->get_result()->fetch_assoc();if(!$a){http_response_code(404);exit('Abstract not found');}
-$logs=[];$ls=db()->prepare('SELECT * FROM review_activity_logs WHERE abstract_id=? ORDER BY id DESC LIMIT 100');$ls->bind_param('i',$id);$ls->execute();$logs=$ls->get_result()->fetch_all(MYSQLI_ASSOC);
-$pageTitle='Abstract '.$a['abs_id'];require __DIR__ . '/../includes/header.php';
+require_once __DIR__ . '/../includes/auth.php';
+require_admin();
+$id = (int)($_GET['id'] ?? 0);
+$stmt = db()->prepare('SELECT a.*,ra.id assignment_id,ra.reviewer_id,ra.status review_status,ra.review_deadline,ra.assigned_at,r.full_name reviewer_name,ar.decision,ar.reviewer_comment,ar.is_final,ar.is_locked,ar.submitted_at FROM abstract a LEFT JOIN review_assignments ra ON ra.abstract_id=a.id AND ra.is_active=1 LEFT JOIN reviewers r ON r.id=ra.reviewer_id LEFT JOIN abstract_reviews ar ON ar.assignment_id=ra.id WHERE a.id=? LIMIT 1');
+$stmt->bind_param('i', $id);
+$stmt->execute();
+$a = $stmt->get_result()->fetch_assoc();
+if (!$a) {
+    http_response_code(404);
+    exit('Abstract not found');
+}
+$logs = [];
+$ls = db()->prepare('SELECT * FROM review_activity_logs WHERE abstract_id=? ORDER BY id DESC LIMIT 100');
+$ls->bind_param('i', $id);
+$ls->execute();
+$logs = $ls->get_result()->fetch_all(MYSQLI_ASSOC);
+$pageTitle = 'Abstract ' . $a['abs_id'];
+require __DIR__ . '/../includes/header.php';
 ?>
-<div class="row g-4"><div class="col-xl-8"><div class="card"><div class="card-body"><div class="d-flex justify-content-between"><div><div class="small-muted">Abstract #<?= e($a['abs_id']) ?></div><h3><?= e($a['abstract_title']) ?></h3></div><?= $a['assignment_id']?status_badge($a['review_status']):'' ?></div><hr><div class="row g-3"><div class="col-md-4"><strong>Presentation</strong><br><?= e($a['presentation']) ?></div><div class="col-md-4"><strong>Mode 1</strong><br><?= e($a['mode_presentation1']) ?></div><div class="col-md-4"><strong>Mode 2</strong><br><?= e($a['mode_presentation2']) ?></div><div class="col-md-4"><strong>E-Poster Type</strong><br><?= e($a['type_of_eposter']) ?></div></div><hr><?php foreach(display_abstract_sections($a) as $label=>$text):?><h6 class="section-title mt-4"><?= e($label) ?></h6><div class="abstract-text"><?= e($text) ?></div><?php endforeach;?></div></div></div>
-<div class="col-xl-4"><div class="card mb-4"><div class="card-body"><h5 class="section-title">Review Assignment</h5><?php if($a['assignment_id']):?><p><strong>Reviewer:</strong><br><?= e($a['reviewer_name']) ?></p><p><strong>Deadline:</strong><br><?= e($a['review_deadline']) ?></p><p><strong>Decision:</strong><br><?= status_badge($a['decision']??$a['review_status']) ?></p><p><strong>Comment:</strong><br><?= nl2br(e($a['reviewer_comment'])) ?: '—' ?></p><a class="btn btn-outline-secondary btn-sm" href="assignment-actions.php?id=<?= (int)$a['assignment_id'] ?>">Manage Assignment</a><?php else:?><div class="text-muted">Not assigned yet.</div><?php endif;?></div></div><div class="card"><div class="card-body"><h5 class="section-title">Activity Log</h5><?php foreach($logs as $l):?><div class="border-bottom py-2"><div class="fw-semibold"><?= e($l['action']) ?></div><div class="small-muted"><?= e($l['created_at']) ?> · <?= e($l['actor_type']) ?></div><?php if($l['description']):?><div class="small"><?= e($l['description']) ?></div><?php endif;?></div><?php endforeach;?></div></div></div></div>
+<div class="row g-4">
+    <div class="col-xl-8">
+        <div class="card">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <div class="small-muted">Abstract #<?= e($a['abs_id']) ?></div>
+                        <h3><?= e($a['topic']) ?></h3>
+                    </div><?= $a['assignment_id'] ? status_badge($a['review_status']) : '' ?>
+                </div>
+                <hr>
+                <div class="row g-3">
+                    <div class="col-md-4"><strong>Presentation</strong><br><?= e($a['presentation']) ?></div>
+
+                    <?php if ($a['mode_presentation1']): ?>
+                        <div class="col-md-4">
+                            <strong>Mode 1</strong><br><?= e($a['mode_presentation1']) ?>
+                        </div>
+                    <?php endif; ?>
+
+                    <?php if ($a['mode_presentation2']): ?>
+                        <div class="col-md-4">
+                            <strong>Mode 2</strong><br><?= e($a['mode_presentation2']) ?>
+                        </div>
+                    <?php endif; ?>
+
+                    <?php if ($a['type_of_eposter']): ?>
+                        <div class="col-md-4"><strong>E-Poster Type</strong><br><?= e($a['type_of_eposter']) ?></div>
+                    <?php endif; ?>
+
+                </div>
+                <hr><?php foreach (display_abstract_sections($a) as $label => $text): ?><h6 class="section-title mt-4"><?= e($label) ?></h6>
+                    <div class="abstract-text"><?= e($text) ?></div><?php endforeach; ?>
+            </div>
+        </div>
+    </div>
+    <div class="col-xl-4">
+        <div class="card mb-4">
+            <div class="card-body">
+                <h5 class="section-title">Review Assignment</h5><?php if ($a['assignment_id']): ?><p><strong>Reviewer:</strong><br><?= e($a['reviewer_name']) ?></p>
+                    <p><strong>Deadline:</strong><br><?= e($a['review_deadline']) ?></p>
+                    <p><strong>Decision:</strong><br><?= status_badge($a['decision'] ?? $a['review_status']) ?></p>
+                    <p><strong>Comment:</strong><br><?= nl2br(e($a['reviewer_comment'])) ?: '—' ?></p><a class="btn btn-outline-secondary btn-sm" href="assignment-actions.php?id=<?= (int)$a['assignment_id'] ?>">Manage Assignment</a><?php else: ?><div class="text-muted">Not assigned yet.</div><?php endif; ?>
+            </div>
+        </div>
+        <div class="card">
+            <div class="card-body">
+                <h5 class="section-title">Activity Log</h5><?php foreach ($logs as $l): ?><div class="border-bottom py-2">
+                        <div class="fw-semibold"><?= e($l['action']) ?></div>
+                        <div class="small-muted"><?= e($l['created_at']) ?> · <?= e($l['actor_type']) ?></div><?php if ($l['description']): ?><div class="small"><?= e($l['description']) ?></div><?php endif; ?>
+                    </div><?php endforeach; ?>
+            </div>
+        </div>
+    </div>
+</div>
 <?php require __DIR__ . '/../includes/footer.php'; ?>
